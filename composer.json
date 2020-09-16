@@ -1,5 +1,5 @@
 {
-    "name": "laravel/installer",
+    "name": "shcode/installer",
     "description": "Laravel application installer.",
     "keywords": ["laravel"],
     "license": "MIT",
