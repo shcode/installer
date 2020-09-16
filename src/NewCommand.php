@@ -50,6 +50,9 @@ class NewCommand extends Command
 
             $stack = $this->jetstreamStack($input, $output);
 
+            $manager = ($stack == "inertia") ?
+                $this->nodePackageManager($input, $output) : null;
+
             $teams = $input->getOption('teams') === true
                     ? (bool) $input->getOption('teams')
                     : (new SymfonyStyle($input, $output))->confirm('Will your application use teams?', false);
@@ -112,7 +115,7 @@ class NewCommand extends Command
             }
 
             if ($input->getOption('jet')) {
-                $this->installJetstream($directory, $stack, $teams, $input, $output);
+                $this->installJetstream($directory, $stack, $teams, $manager, $input, $output);
             }
 
             $output->writeln(PHP_EOL.'<comment>Application ready! Build something amazing.</comment>');
@@ -127,18 +130,19 @@ class NewCommand extends Command
      * @param  string  $directory
      * @param  string  $stack
      * @param  bool  $teams
+     * @param  string $manager
      * @param  \Symfony\Component\Console\Input\InputInterface  $input
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
      * @return void
      */
-    protected function installJetstream(string $directory, string $stack, bool $teams, InputInterface $input, OutputInterface $output)
+    protected function installJetstream(string $directory, string $stack, bool $teams, string $manager, InputInterface $input, OutputInterface $output)
     {
         chdir($directory);
 
         $commands = array_filter([
             $this->findComposer().' require laravel/jetstream',
             trim(sprintf(PHP_BINARY.' artisan jetstream:install %s %s', $stack, $teams ? '--teams' : '')),
-            $stack === 'inertia' ? 'npm install && npm run dev' : null,
+            $stack === 'inertia' ? "$manager install && $manager run dev" : null,
             PHP_BINARY.' artisan storage:link',
         ]);
 
@@ -166,6 +170,33 @@ class NewCommand extends Command
         $helper = $this->getHelper('question');
 
         $question = new ChoiceQuestion('Which Jetstream stack do you prefer?', $stacks);
+
+        $output->write(PHP_EOL);
+
+        return $helper->ask($input, new SymfonyStyle($input, $output), $question);
+    }
+
+    /**
+     * Determine node package manager
+     *
+     * @param  \Symfony\Component\Console\Input\InputInterface  $input
+     * @param  \Symfony\Component\Console\Output\OutputInterface  $output
+     * @return string
+     */
+    protected function nodePackageManager(InputInterface $input, OutputInterface $output)
+    {
+        $managers = [
+            'yarn',
+            'npm',
+        ];
+
+        if ($input->getOption('manager') && in_array($input->getOption('manager'), $managers)) {
+            return $input->getOption('manager');
+        }
+
+        $helper = $this->getHelper('question');
+
+        $question = new ChoiceQuestion('Which Node package manager do you prefer?', $managers);
 
         $output->write(PHP_EOL);
 
