@@ -50,7 +50,7 @@ class NewCommand extends Command
 
             $stack = $this->jetstreamStack($input, $output);
 
-            $manager = ($stack == "inertia") ?
+            $manager = ($stack === 'inertia') ?
                 $this->nodePackageManager($input, $output) : null;
 
             $teams = $input->getOption('teams') === true
@@ -189,10 +189,6 @@ class NewCommand extends Command
             'yarn',
             'npm',
         ];
-
-        if ($input->getOption('manager') && in_array($input->getOption('manager'), $managers)) {
-            return $input->getOption('manager');
-        }
 
         $helper = $this->getHelper('question');
 
